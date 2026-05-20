@@ -293,7 +293,8 @@ def test_invalid_envelope_produces_finding() -> None:
 
 
 def test_malformed_json_produces_invalid_envelope_finding() -> None:
-    import tempfile, os
+    import os
+    import tempfile
     bad_line = '{"schema_version":"store.event.v1",'  # truncated — not valid JSON
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".jsonl", delete=False, encoding="utf-8"

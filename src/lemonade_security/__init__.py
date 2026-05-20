@@ -6,6 +6,7 @@ from lemonade_security.audit_agent_proposals import audit_agent_proposals
 from lemonade_security.audit_credential_replay import audit_credential_replay
 from lemonade_security.audit_prompt_injection import audit_prompt_injection
 from lemonade_security.drift import DriftFinding, DriftResult, scan_permission_drift
+from lemonade_security.lemonade_server import LemonadeModel, ServerStatus, probe_server
 from lemonade_security.maturity import MaturityScore, score_iam_maturity
 from lemonade_security.policy_check import LEMONADE_POLICIES, PolicyRule, policy_check_events
 from lemonade_security.sdk_plugin import SECURITY_TOOLS, SecurityToolError, execute_security_tool
@@ -27,6 +28,9 @@ __all__ = [
     "LEMONADE_POLICIES",
     "PolicyRule",
     "policy_check_events",
+    "LemonadeModel",
+    "ServerStatus",
+    "probe_server",
     "SECURITY_TOOLS",
     "SecurityToolError",
     "execute_security_tool",
