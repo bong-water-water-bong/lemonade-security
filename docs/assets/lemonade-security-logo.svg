@@ -1,27 +1,185 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-  <title id="title">Lemonade Security logo</title>
-  <desc id="desc">A local-first security department logo showing policy checks, agent audits, AIBOM manifests, and privacy findings.</desc>
-  <rect width="1200" height="420" rx="36" fill="#eaf7ef"/>
-  <rect x="32" y="32" width="1136" height="356" rx="28" fill="#ffffff" stroke="#173b35" stroke-width="6"/>
-  <path d="M149 72l72 28v61c0 57-33 101-72 126-39-25-72-69-72-126v-61z" fill="#78c6a3" stroke="#173b35" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M116 169l24 24 48-64" fill="none" stroke="#173b35" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="260" y="132" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800" fill="#173b35">Lemonade Security</text>
-  <text x="262" y="184" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="600" fill="#52706a">policy checks • agent audits • AIBOM manifests</text>
-  <g transform="translate(92 248)">
-    <rect width="240" height="76" rx="14" fill="#fff3b0" stroke="#173b35" stroke-width="4"/>
-    <text x="120" y="48" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" fill="#173b35">event log</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="480" viewBox="0 0 1440 480" role="img" aria-labelledby="title desc">
+  <title id="title">Lemonade Security app logo</title>
+  <desc id="desc">A lemon security guard wearing dark sunglasses and a black skinny tie, raising a lemon-marked shield in one arm and gripping a pepper-spray canister in the other. Next to an Audit Stream dashboard showing live findings, IAM maturity level, and OWASP risk codes. Tagline: SHIELD is sweeter than SUE — local, preventative, always watching.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="0.55" stop-color="#edf7fc"/>
+      <stop offset="1" stop-color="#e5f1f8"/>
+    </linearGradient>
+    <linearGradient id="lemon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff176"/>
+      <stop offset="0.45" stop-color="#ffd83d"/>
+      <stop offset="1" stop-color="#f5a400"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c2530"/>
+      <stop offset="1" stop-color="#0c1117"/>
+    </linearGradient>
+    <linearGradient id="shieldFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff09a"/>
+      <stop offset="0.6" stop-color="#ffd83d"/>
+      <stop offset="1" stop-color="#c99c00"/>
+    </linearGradient>
+    <linearGradient id="canister" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8392b"/>
+      <stop offset="0.65" stop-color="#b0231a"/>
+      <stop offset="1" stop-color="#6e120b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#102a43" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- sky + hills (same family as the cashier logo) -->
+  <rect width="1440" height="480" rx="36" fill="url(#bg)"/>
+  <path d="M0 340 C150 275 246 292 360 329 C503 374 622 358 760 292 C910 222 1040 224 1180 270 C1282 304 1356 286 1440 242 L1440 480 L0 480 Z" fill="#b7d9ed"/>
+  <path d="M0 378 C154 321 262 334 395 377 C532 421 675 386 812 332 C954 276 1082 286 1208 322 C1308 351 1370 344 1440 310 L1440 480 L0 480 Z" fill="#8fc2df" opacity="0.56"/>
+
+  <!-- LEFT: Audit Stream dashboard panel -->
+  <g transform="translate(58 55)" filter="url(#shadow)">
+    <rect x="0" y="0" width="456" height="320" rx="28" fill="url(#panel)"/>
+    <rect x="24" y="24" width="408" height="48" rx="14" fill="#121820"/>
+    <circle cx="50" cy="48" r="7" fill="#ef4444"/>
+    <text x="72" y="56" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800" fill="#f8fafc">Audit Stream</text>
+    <text x="318" y="55" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#ffd447">LIVE</text>
+
+    <!-- tile 1: SHIELD / POLICY -->
+    <g transform="translate(24 92)">
+      <rect width="126" height="86" rx="16" fill="#f8fafc"/>
+      <path d="M63 18 C82 22 100 22 110 22 L110 50 C110 66 90 76 63 80 C36 76 16 66 16 50 L16 22 C26 22 44 22 63 18 Z" fill="#fde68a" stroke="#854d0e" stroke-width="4"/>
+      <path d="M50 50 l9 9 l18 -22" fill="none" stroke="#854d0e" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="18" y="80" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10" font-weight="800" fill="#475569">POLICY</text>
+    </g>
+
+    <!-- tile 2: EYE / WATCH -->
+    <g transform="translate(166 92)">
+      <rect width="126" height="86" rx="16" fill="#16202b" stroke="#2e3a47"/>
+      <path d="M22 44 C42 22 84 22 104 44 C84 66 42 66 22 44 Z" fill="none" stroke="#42d392" stroke-width="6"/>
+      <circle cx="63" cy="44" r="11" fill="#42d392"/>
+      <circle cx="63" cy="44" r="4" fill="#0c1117"/>
+      <text x="22" y="78" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="800" fill="#d1fae5">WATCH</text>
+    </g>
+
+    <!-- tile 3: BELL / ALERTS -->
+    <g transform="translate(308 92)">
+      <rect width="124" height="86" rx="16" fill="#f8fafc"/>
+      <path d="M44 22 C44 16 54 16 54 22 L54 26 C72 32 74 46 74 56 L82 64 L34 64 L42 56 C42 46 44 32 62 26 L62 22 C62 16 72 16 72 22" fill="#fde68a" stroke="#92400e" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="58" cy="22" r="3" fill="#92400e"/>
+      <circle cx="92" cy="22" r="9" fill="#ef4444"/>
+      <text x="86" y="26" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="11" font-weight="900" fill="#f8fafc">3</text>
+      <text x="24" y="80" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10" font-weight="800" fill="#475569">ALERTS</text>
+    </g>
+
+    <!-- panel 1: findings counter -->
+    <g transform="translate(24 198)">
+      <rect width="192" height="92" rx="18" fill="#111820" stroke="#2e3a47"/>
+      <text x="18" y="32" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#cbd5e1">Findings</text>
+      <text x="18" y="72" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="900" fill="#f8fafc">12 open</text>
+      <circle cx="162" cy="62" r="18" fill="#ef4444"/>
+      <text x="162" y="68" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="900" fill="#f8fafc" text-anchor="middle">!</text>
+    </g>
+
+    <!-- panel 2: IAM maturity level (IBM 4-step) -->
+    <g transform="translate(236 198)">
+      <rect width="196" height="92" rx="18" fill="#111820" stroke="#2e3a47"/>
+      <text x="22" y="32" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#cbd5e1">IAM Maturity</text>
+      <rect x="22"  y="48" width="34" height="22" rx="5" fill="#42d392"/>
+      <rect x="62"  y="48" width="34" height="22" rx="5" fill="#42d392"/>
+      <rect x="102" y="48" width="34" height="22" rx="5" fill="#1c2530" stroke="#2e3a47"/>
+      <rect x="142" y="48" width="34" height="22" rx="5" fill="#1c2530" stroke="#2e3a47"/>
+      <text x="22" y="86" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" font-weight="800" fill="#cbd5e1">Lv 2 · FOUNDATION</text>
+    </g>
   </g>
-  <path d="M348 286h80" stroke="#173b35" stroke-width="8" stroke-linecap="round"/>
-  <path d="M412 266l24 20-24 20" fill="none" stroke="#173b35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <g transform="translate(464 230)">
-    <rect width="272" height="112" rx="16" fill="#eaf7ef" stroke="#173b35" stroke-width="4"/>
-    <text x="136" y="46" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="800" fill="#173b35">auditor</text>
-    <text x="136" y="82" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700" fill="#52706a">local only</text>
+
+  <!-- CENTER: lemon security guard mascot (same body as the cashier lemon) -->
+  <g transform="translate(420 80)" filter="url(#shadow)">
+    <ellipse cx="135" cy="135" rx="96" ry="112" fill="url(#lemon)" stroke="#3b2f0b" stroke-width="8"/>
+
+    <!-- two leaves on top, same shape family -->
+    <path d="M88 34 C105 4 140 -3 170 18 C138 30 116 39 88 34Z" fill="#75a843" stroke="#2f4c1f" stroke-width="7"/>
+    <path d="M158 26 C178 5 211 12 226 40 C198 38 176 34 158 26Z" fill="#8fbd4d" stroke="#2f4c1f" stroke-width="7"/>
+
+    <!-- sunglasses: lenses + bridge in the cashier silhouette -->
+    <path d="M55 104 C82 91 112 93 133 109 L128 135 C99 123 74 123 48 135 Z" fill="#111111"/>
+    <path d="M145 109 C169 91 202 93 224 111 L216 137 C190 123 168 122 140 136 Z" fill="#111111"/>
+    <path d="M73 102 C115 91 163 94 213 108" fill="none" stroke="#111111" stroke-width="10" stroke-linecap="round"/>
+    <!-- subtle lens glare -->
+    <path d="M67 109 C82 102 100 102 116 110" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55" fill="none"/>
+    <path d="M157 109 C172 102 192 102 208 110" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55" fill="none"/>
+
+    <!-- stern smile -->
+    <path d="M82 170 C118 201 163 201 198 170" fill="none" stroke="#37290a" stroke-width="9" stroke-linecap="round"/>
+
+    <!-- black skinny tie hanging from the chin -->
+    <path d="M125 188 L145 188 L150 208 L138 296 L132 296 L120 208 Z" fill="#0a0c10" stroke="#37290a" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M125 188 L145 188 L141 200 L129 200 Z" fill="#1b1f26"/>
+
+    <!-- earpiece coil cue -->
+    <path d="M232 132 C254 138 254 162 240 178" stroke="#111111" stroke-width="3" fill="none"/>
+    <path d="M240 178 C240 198 238 218 236 232" stroke="#111111" stroke-width="3" fill="none"/>
+
+    <!-- LEFT arm (viewer's left): raises the shield -->
+    <path d="M38 176 C13 168 -8 200 12 234" fill="none" stroke="#2b240a" stroke-width="11" stroke-linecap="round"/>
+
+    <!-- shield: heraldic with lemon emblem -->
+    <g transform="translate(-92 200) rotate(-12 90 60)">
+      <path d="M30 8 L150 8 L150 78 C150 138 110 168 90 175 C70 168 30 138 30 78 Z" fill="url(#shieldFace)" stroke="#5c4500" stroke-width="6"/>
+      <path d="M44 18 L136 18 L136 76 C136 124 106 148 90 154 C74 148 44 124 44 76 Z" fill="none" stroke="#9c7a00" stroke-width="2"/>
+      <ellipse cx="90" cy="78" rx="32" ry="24" fill="#fff176" stroke="#9c7a00" stroke-width="3"/>
+      <ellipse cx="64"  cy="78" rx="6" ry="4" fill="#fff176" stroke="#9c7a00" stroke-width="3"/>
+      <ellipse cx="116" cy="78" rx="6" ry="4" fill="#fff176" stroke="#9c7a00" stroke-width="3"/>
+      <path d="M86 56 C95 48 108 48 114 58 C106 60 96 60 86 56 Z" fill="#75a843" stroke="#2f4c1f" stroke-width="2"/>
+      <text x="90" y="124" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="900" font-size="18" text-anchor="middle" fill="#5c4500" letter-spacing="2">LS</text>
+    </g>
+
+    <!-- RIGHT arm (viewer's right): grips the pepper spray -->
+    <path d="M226 178 C266 170 286 196 270 232" fill="none" stroke="#2b240a" stroke-width="11" stroke-linecap="round"/>
+
+    <!-- pepper spray canister at the hip -->
+    <g transform="translate(252 200)">
+      <g opacity="0.85">
+        <circle cx="18" cy="-2"  r="5"   fill="#ffffff" opacity="0.9"/>
+        <circle cx="28" cy="-10" r="4"   fill="#ffffff" opacity="0.7"/>
+        <circle cx="10" cy="-12" r="3"   fill="#ffffff" opacity="0.55"/>
+        <circle cx="22" cy="-22" r="2.5" fill="#ffffff" opacity="0.45"/>
+      </g>
+      <rect x="0" y="20" width="34" height="74" rx="6" fill="url(#canister)" stroke="#3d0a07" stroke-width="3"/>
+      <rect x="0" y="42" width="34" height="8" fill="#ffffff" opacity="0.9"/>
+      <text x="17" y="74" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="900" font-size="13" text-anchor="middle" fill="#ffffff" letter-spacing="2">OC</text>
+      <rect x="-2" y="8" width="38" height="14" rx="3" fill="#1b1f26" stroke="#000" stroke-width="1.5"/>
+      <rect x="16" y="0" width="6" height="10" fill="#0a0c10"/>
+      <rect x="-6" y="12" width="6" height="10" fill="#ffd447" stroke="#5c4500" stroke-width="1.5"/>
+    </g>
   </g>
-  <path d="M752 286h80" stroke="#173b35" stroke-width="8" stroke-linecap="round"/>
-  <path d="M816 266l24 20-24 20" fill="none" stroke="#173b35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <g transform="translate(868 248)">
-    <rect width="240" height="76" rx="14" fill="#e9f0ff" stroke="#173b35" stroke-width="4"/>
-    <text x="120" y="48" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" fill="#173b35">security.*</text>
+
+  <!-- RIGHT: wordmark + tagline (mirrors the cashier logo's right panel) -->
+  <g transform="translate(742 88)">
+    <text x="0" y="78" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="78" font-weight="900" letter-spacing="0" fill="#101820">Lemonade</text>
+    <text x="3" y="152" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="72" font-weight="900" letter-spacing="0" fill="#166534">Security</text>
+    <text x="6" y="194" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="900" fill="#854d0e">SHIELD is sweeter than SUE</text>
+    <text x="8" y="228" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800" fill="#334155">Audit. Alert. Never amend.</text>
+    <text x="8" y="254" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#475569">local audit · OWASP/ASI codes · IAM maturity</text>
+
+    <g transform="translate(6 282)">
+      <rect x="0" y="0" width="126" height="38" rx="19" fill="#101820"/>
+      <text x="17" y="25" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#f8fafc">audit</text>
+      <rect x="140" y="0" width="116" height="38" rx="19" fill="#fff3c4"/>
+      <text x="160" y="25" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#854d0e">OWASP</text>
+      <rect x="270" y="0" width="112" height="38" rx="19" fill="#dff6e7"/>
+      <text x="291" y="25" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#166534">offline</text>
+      <rect x="396" y="0" width="110" height="38" rx="19" fill="#dbeafe"/>
+      <text x="417" y="25" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800" fill="#1d4ed8">ASI</text>
+    </g>
+
+    <g transform="translate(6 344)">
+      <path d="M0 0 h520" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="20" cy="0" r="9" fill="#ef4444"/>
+      <text x="40" y="7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#475569">findings</text>
+      <circle cx="160" cy="0" r="9" fill="#ffd447"/>
+      <text x="180" y="7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#475569">maturity</text>
+      <circle cx="310" cy="0" r="9" fill="#60a5fa"/>
+      <text x="330" y="7" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="17" font-weight="700" fill="#475569">aibom</text>
+    </g>
   </g>
 </svg>
