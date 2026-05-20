@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from lemonade_store.events import Actor, Event, EventValidationError, load_event
+
 from lemonade_security.owasp import risk_ids_for_code
 
 SENSITIVE_PAYMENT_TERMS = frozenset(
