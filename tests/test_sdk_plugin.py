@@ -67,6 +67,20 @@ def test_unknown_tool_raises() -> None:
         execute_security_tool("not_a_real_tool", {})
 
 
+def test_missing_required_arg_raises() -> None:
+    with pytest.raises(SecurityToolError, match="missing required argument"):
+        execute_security_tool("lemonade_security_audit", {})  # missing events_path, store_id
+
+
+def test_patterns_as_string_raises() -> None:
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp, pytest.raises(SecurityToolError, match="list"):
+        execute_security_tool(
+            "lemonade_security_secrets",
+            {"scan_root": tmp, "patterns": "*.jsonl"},
+        )
+
+
 # ---------------------------------------------------------------------------
 # lemonade_security_audit
 # ---------------------------------------------------------------------------
