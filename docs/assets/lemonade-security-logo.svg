@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="480" viewBox="0 0 1440 480" role="img" aria-labelledby="title desc">
   <title id="title">Lemonade Security app logo</title>
-  <desc id="desc">A lemon security guard wearing dark sunglasses and a black skinny tie, raising a lemon-marked shield in one arm and gripping a pepper-spray canister in the other. Next to an Audit Stream dashboard showing live findings, IAM maturity level, and OWASP risk codes. Tagline: SHIELD is sweeter than SUE — local, preventative, always watching.</desc>
+  <desc id="desc">A lemon security guard wearing dark sunglasses, raising a lemon-marked shield in one arm and gripping a pepper-spray canister in the other. Next to an Audit Stream dashboard showing live findings, IAM maturity level, and OWASP risk codes. Tagline: SHIELD is sweeter than SUE — local, preventative, always watching.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#f8fbff"/>
@@ -110,10 +110,6 @@
 
     <!-- stern smile -->
     <path d="M82 170 C118 201 163 201 198 170" fill="none" stroke="#37290a" stroke-width="9" stroke-linecap="round"/>
-
-    <!-- black skinny tie hanging from the chin -->
-    <path d="M125 188 L145 188 L150 208 L138 296 L132 296 L120 208 Z" fill="#0a0c10" stroke="#37290a" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M125 188 L145 188 L141 200 L129 200 Z" fill="#1b1f26"/>
 
     <!-- earpiece coil cue -->
     <path d="M232 132 C254 138 254 162 240 178" stroke="#111111" stroke-width="3" fill="none"/>
