@@ -128,5 +128,8 @@ def risk_ids_for_code(code: str) -> tuple[str, ...]:
         "invalid_envelope": ("DSGAI05", "ASI08"),
         "invalid_json": ("DSGAI05",),
         "draft_already_approved": ("LLM06:2026", "ASI09"),
+        "ASI03_rogue_agent_id": ("ASI03", "LLM06:2026"),
+        "ASI03_stripped_agent_id": ("ASI03",),
+        "ASI02_orphan_delegation": ("ASI02", "LLM06:2026"),
     }
     return mapping.get(code, ())
