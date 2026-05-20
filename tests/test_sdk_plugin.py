@@ -190,12 +190,18 @@ def test_maturity_tool_adaptive_log() -> None:
 # lemonade_security_aibom
 # ---------------------------------------------------------------------------
 
+def _parse_aibom_text(text: str) -> dict:
+    """Strip the status header line before parsing AIBOM JSON."""
+    json_part = "\n".join(line for line in text.splitlines() if not line.startswith("#"))
+    return json.loads(json_part)
+
+
 def test_aibom_tool_returns_cyclonedx_json() -> None:
     text, events = execute_security_tool(
         "lemonade_security_aibom",
         {"store_id": "tie-dye-farms"},
     )
-    parsed = json.loads(text)
+    parsed = _parse_aibom_text(text)
     assert parsed["bomFormat"] == "CycloneDX"
     assert parsed["specVersion"] == "1.6"
     assert events == []
@@ -206,6 +212,6 @@ def test_aibom_tool_includes_plugin_component() -> None:
         "lemonade_security_aibom",
         {"store_id": "tie-dye-farms"},
     )
-    parsed = json.loads(text)
+    parsed = _parse_aibom_text(text)
     names = [c["name"] for c in parsed["components"]]
     assert "lemonade-sdk-security" in names

@@ -46,6 +46,7 @@ from lemonade_security.aibom import AibomComponent, local_manifest, to_cyclonedx
 from lemonade_security.drift import DriftResult, scan_permission_drift
 from lemonade_security.maturity import MaturityScore, score_iam_maturity
 from lemonade_security.policy_check import policy_check_events
+from lemonade_security.lemonade_server import DEFAULT_URL, list_downloaded_models, models_to_components, probe_server
 from lemonade_security.secret_scan import SecretScanResult, scan_directory, scan_files
 
 
@@ -167,8 +168,9 @@ SECURITY_TOOLS: list[dict[str, Any]] = [
             "description": (
                 "Generate a CycloneDX 1.6-compatible AI Bill of Materials manifest "
                 "for the local Lemonade Security installation. Lists models, tools, "
-                "plugins, and department repos. Read-only. No cloud calls. "
-                "Maps to OWASP LLM03:2026 (Supply Chain)."
+                "plugins, and department repos. When a local Lemonade Server is "
+                "reachable, downloaded models are included automatically. "
+                "Read-only. No cloud calls. Maps to OWASP LLM03:2026 (Supply Chain)."
             ),
             "parameters": {
                 "type": "object",
@@ -176,6 +178,13 @@ SECURITY_TOOLS: list[dict[str, Any]] = [
                     "store_id": {
                         "type": "string",
                         "description": "Store identifier to include in the manifest.",
+                    },
+                    "server_url": {
+                        "type": "string",
+                        "description": (
+                            f"Lemonade Server base URL (default: {DEFAULT_URL}). "
+                            "Pass null or omit to use the default."
+                        ),
                     },
                 },
                 "required": ["store_id"],
@@ -320,9 +329,9 @@ def _run_maturity(args: dict[str, Any]) -> tuple[str, list[Event]]:
 
 def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
     store_id = args["store_id"]
+    server_url = args.get("server_url") or DEFAULT_URL
 
-    # Default local inventory — thin, no filesystem discovery in v0.1.
-    components = (
+    static_components = (
         AibomComponent(
             kind="plugin",
             name="lemonade-sdk-security",
@@ -339,7 +348,20 @@ def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
         ),
     )
 
+    # Enrich with locally downloaded models when server is reachable.
+    server_components = models_to_components(list_downloaded_models(server_url))
+    components = static_components + server_components
+
     manifest = local_manifest(store_id=store_id, components=components)
     text = to_cyclonedx_json(manifest)
 
-    return text, []
+    status = probe_server(server_url)
+    if status.online:
+        header = (
+            f"# Lemonade Server online at {server_url} "
+            f"({status.downloaded_model_count} downloaded model(s) included)\n"
+        )
+    else:
+        header = f"# Lemonade Server offline at {server_url} (static components only)\n"
+
+    return header + text, []
