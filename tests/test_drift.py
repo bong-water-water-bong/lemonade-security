@@ -121,8 +121,10 @@ def test_approval_gate_drift_count_matches_log() -> None:
 def test_approval_gate_not_triggered_when_approval_set() -> None:
     """An event with requires_approval=True for a gate-required action is fine."""
     # accounting.export with requires_approval=True should not produce a finding.
-    # We verify by checking the clean log contains no approval_gate_drift.
-    result = scan_permission_drift(FIXTURES / "drift_clean.jsonl", store_id="tie-dye-farms")
+    result = scan_permission_drift(
+        FIXTURES / "drift_with_approval.jsonl", store_id="tie-dye-farms"
+    )
+    assert result.passed is True
     codes = {f.code for f in result.findings}
     assert "approval_gate_drift" not in codes
 
@@ -288,6 +290,24 @@ def test_invalid_envelope_produces_finding() -> None:
     assert "invalid_envelope" in codes
     envelope_findings = [f for f in result.findings if f.code == "invalid_envelope"]
     assert all(f.severity == "high" for f in envelope_findings)
+
+
+def test_malformed_json_produces_invalid_envelope_finding() -> None:
+    import tempfile, os
+    bad_line = '{"schema_version":"store.event.v1",'  # truncated — not valid JSON
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".jsonl", delete=False, encoding="utf-8"
+    ) as tmp:
+        tmp.write(bad_line + "\n")
+        tmp_path = tmp.name
+    try:
+        result = scan_permission_drift(tmp_path, store_id="tie-dye-farms")
+        assert result.checked_events == 0
+        invalids = [f for f in result.findings if f.code == "invalid_envelope"]
+        assert invalids, "expected an invalid_envelope finding for malformed JSON"
+        assert all(f.severity == "high" for f in invalids)
+    finally:
+        os.unlink(tmp_path)
 
 
 # --------------------------------------------------------------------------- #
