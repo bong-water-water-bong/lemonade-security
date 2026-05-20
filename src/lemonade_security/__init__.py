@@ -6,6 +6,7 @@ from lemonade_security.audit_agent_proposals import audit_agent_proposals
 from lemonade_security.audit_credential_replay import audit_credential_replay
 from lemonade_security.audit_prompt_injection import audit_prompt_injection
 from lemonade_security.maturity import MaturityScore, score_iam_maturity
+from lemonade_security.policy_check import LEMONADE_POLICIES, PolicyRule, policy_check_events
 
 __all__ = [
     "AibomComponent",
@@ -18,4 +19,7 @@ __all__ = [
     "audit_prompt_injection",
     "local_manifest",
     "score_iam_maturity",
+    "LEMONADE_POLICIES",
+    "PolicyRule",
+    "policy_check_events",
 ]

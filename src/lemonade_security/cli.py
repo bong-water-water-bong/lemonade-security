@@ -9,6 +9,7 @@ from lemonade_store.events import dump_event
 
 from lemonade_security.audit import audit_event_log, finding_events, summary_event
 from lemonade_security.maturity import score_iam_maturity
+from lemonade_security.policy_check import policy_check_events
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,6 +40,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "audit":
         result = audit_event_log(args.events, store_id=args.store_id)
         for event in finding_events(result):
+            print(dump_event(event))
+        for event in policy_check_events(result):
             print(dump_event(event))
         print(dump_event(summary_event(result)))
         return 1 if result.findings else 0
