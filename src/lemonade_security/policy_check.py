@@ -62,23 +62,22 @@ LEMONADE_POLICIES: tuple[PolicyRule, ...] = (
 
 def policy_check_events(result: AuditResult) -> list[Event]:
     """Emit one security.policy.checked event per registered policy."""
-    active_codes = frozenset(finding.code for finding in result.findings)
     return [
-        _policy_event(result, index, policy, active_codes)
-        for index, policy in enumerate(LEMONADE_POLICIES, start=1)
+        _policy_event(result, policy)
+        for policy in LEMONADE_POLICIES
     ]
 
 
 def _policy_event(
     result: AuditResult,
-    index: int,
     policy: PolicyRule,
-    active_codes: frozenset[str],
 ) -> Event:
+    active_codes = frozenset(finding.code for finding in result.findings)
     triggered = active_codes & policy.finding_codes
+    triggered_count = sum(1 for f in result.findings if f.code in policy.finding_codes)
     return Event(
         schema_version="store.event.v1",
-        event_id=_stable_event_id(result.store_id, "policy", str(index), policy.id),
+        event_id=_stable_event_id(result.store_id, "policy", policy.id),
         ts=_now_utc(),
         store_id=result.store_id,
         department="security",
@@ -87,7 +86,7 @@ def _policy_event(
         actor=Actor(kind="agent_auto", id="security.auditor"),
         requires_approval=False,
         approved_by=None,
-        payload=_payload(policy, "fail" if triggered else "pass", len(triggered)),
+        payload=_payload(policy, "fail" if triggered else "pass", triggered_count),
     )
 
 

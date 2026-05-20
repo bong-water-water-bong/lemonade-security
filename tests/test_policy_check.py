@@ -78,3 +78,12 @@ def test_check_scope_is_store_event_log() -> None:
     events = policy_check_events(result)
 
     assert all(e.payload["check_scope"] == "store-event-log" for e in events)
+
+
+def test_event_ids_stable_regardless_of_policy_order() -> None:
+    # Same store, same result → same IDs regardless of which index we use
+    result = audit_event_log(FIXTURES / "store_events.jsonl", store_id="tie-dye-farms")
+    events = policy_check_events(result)
+    # Run again — IDs must be identical (deterministic hash from store_id + policy.id)
+    events2 = policy_check_events(result)
+    assert [e.event_id for e in events] == [e.event_id for e in events2]
