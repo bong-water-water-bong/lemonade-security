@@ -1,0 +1,1 @@
+{"schema_version":"store.event.v1","event_id":"drift-ap-001","ts":"2026-05-19T20:00:00Z","store_id":"tie-dye-farms","department":"accounting","type":"accounting.export","source":"lemonade-accounting","actor":{"kind":"agent_auto","id":"accounting.closer"},"requires_approval":false,"approved_by":null,"payload":{"format":"csv","date":"2026-05-19"}}
