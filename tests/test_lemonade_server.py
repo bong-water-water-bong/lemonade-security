@@ -8,6 +8,7 @@ Tests are split into two groups:
 from __future__ import annotations
 
 import json
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -21,7 +22,6 @@ from lemonade_security.lemonade_server import (
     models_to_components,
     probe_server,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -90,6 +90,21 @@ def test_handles_missing_data_key() -> None:
     body = json.dumps({"object": "list"}).encode()
     with patch("urllib.request.urlopen", return_value=_make_mock_response(body)):
         assert list_downloaded_models() == []
+
+
+def test_handles_json_array_response() -> None:
+    body = json.dumps([_FAKE_MODEL_JSON]).encode()
+    with patch("urllib.request.urlopen", return_value=_make_mock_response(body)):
+        assert list_downloaded_models() == []
+
+
+def test_handles_null_labels_gracefully() -> None:
+    null_labels = {**_FAKE_MODEL_JSON, "labels": None}
+    body = json.dumps({"data": [null_labels]}).encode()
+    with patch("urllib.request.urlopen", return_value=_make_mock_response(body)):
+        models = list_downloaded_models()
+    assert len(models) == 1
+    assert models[0].labels == ()
 
 
 # ---------------------------------------------------------------------------
@@ -195,8 +210,12 @@ def test_aibom_tool_works_when_server_offline() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Live tests — skipped when server is not reachable
+# Live tests — only run when RUN_LEMONADE_LIVE_TESTS=1 is set in the environment.
+# No network calls happen at import/collection time.
 # ---------------------------------------------------------------------------
+
+_RUN_LIVE = os.environ.get("RUN_LEMONADE_LIVE_TESTS") == "1"
+
 
 def _server_live() -> bool:
     try:
@@ -207,15 +226,19 @@ def _server_live() -> bool:
         return False
 
 
-@pytest.mark.skipif(not _server_live(), reason="Lemonade Server not running")
+@pytest.mark.skipif(not _RUN_LIVE, reason="set RUN_LEMONADE_LIVE_TESTS=1 to run live tests")
 def test_live_probe_returns_online() -> None:
+    if not _server_live():
+        pytest.skip("Lemonade Server not running")
     status = probe_server()
     assert status.online is True
     assert status.downloaded_model_count > 0
 
 
-@pytest.mark.skipif(not _server_live(), reason="Lemonade Server not running")
+@pytest.mark.skipif(not _RUN_LIVE, reason="set RUN_LEMONADE_LIVE_TESTS=1 to run live tests")
 def test_live_models_have_expected_fields() -> None:
+    if not _server_live():
+        pytest.skip("Lemonade Server not running")
     models = list_downloaded_models()
     assert len(models) > 0
     for m in models:
@@ -224,10 +247,13 @@ def test_live_models_have_expected_fields() -> None:
         assert isinstance(m.labels, tuple)
 
 
-@pytest.mark.skipif(not _server_live(), reason="Lemonade Server not running")
+@pytest.mark.skipif(not _RUN_LIVE, reason="set RUN_LEMONADE_LIVE_TESTS=1 to run live tests")
 def test_live_aibom_tool_includes_real_models() -> None:
-    from lemonade_security.sdk_plugin import execute_security_tool
+    if not _server_live():
+        pytest.skip("Lemonade Server not running")
     import json as _json
+
+    from lemonade_security.sdk_plugin import execute_security_tool
 
     text, _ = execute_security_tool("lemonade_security_aibom", {"store_id": "tie-dye-farms"})
     assert "online" in text

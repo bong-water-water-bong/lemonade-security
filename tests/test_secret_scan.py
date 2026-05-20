@@ -9,9 +9,12 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-import pytest
-
-from lemonade_security.secret_scan import SecretFinding, SecretScanResult, scan_directory, scan_files
+from lemonade_security.secret_scan import (
+    SecretFinding,
+    SecretScanResult,
+    scan_directory,
+    scan_files,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

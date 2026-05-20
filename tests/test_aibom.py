@@ -6,7 +6,6 @@ import pytest
 
 from lemonade_security.aibom import AibomComponent, local_manifest, to_cyclonedx_json
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

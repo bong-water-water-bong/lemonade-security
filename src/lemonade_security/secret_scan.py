@@ -43,7 +43,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -336,9 +335,8 @@ def _find_secret_key(obj: Any) -> str | None:
     """Return the first secret-named key with a non-empty string value, or None."""
     if isinstance(obj, dict):
         for key, value in obj.items():
-            if isinstance(key, str) and key.lower() in _SECRET_JSON_KEYS:
-                if isinstance(value, str) and value:
-                    return key
+            if isinstance(key, str) and key.lower() in _SECRET_JSON_KEYS and isinstance(value, str) and value:
+                return key
             # Recurse into nested structures
             nested = _find_secret_key(value)
             if nested is not None:

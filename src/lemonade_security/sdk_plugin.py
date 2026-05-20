@@ -35,20 +35,23 @@ definitions that any LLM hosted on a Lemonade Server can invoke.
 
 from __future__ import annotations
 
-import json
-from pathlib import Path
+import urllib.parse
 from typing import Any
 
 from lemonade_store.events import Event
 
-from lemonade_security.audit import AuditResult, audit_event_log, finding_events, summary_event
 from lemonade_security.aibom import AibomComponent, local_manifest, to_cyclonedx_json
+from lemonade_security.audit import AuditResult, audit_event_log, finding_events, summary_event
 from lemonade_security.drift import DriftResult, scan_permission_drift
+from lemonade_security.lemonade_server import (
+    DEFAULT_URL,
+    list_downloaded_models,
+    models_to_components,
+    probe_server,
+)
 from lemonade_security.maturity import MaturityScore, score_iam_maturity
 from lemonade_security.policy_check import policy_check_events
-from lemonade_security.lemonade_server import DEFAULT_URL, list_downloaded_models, models_to_components, probe_server
-from lemonade_security.secret_scan import SecretScanResult, scan_directory, scan_files
-
+from lemonade_security.secret_scan import SecretScanResult, scan_directory
 
 # ---------------------------------------------------------------------------
 # Tool definitions (OpenAI function-calling schema)
@@ -239,7 +242,12 @@ def execute_security_tool(
     fn = dispatch.get(name)
     if fn is None:
         raise SecurityToolError(f"unknown security tool: {name!r}")
-    return fn(arguments)
+    try:
+        return fn(arguments)
+    except KeyError as exc:
+        raise SecurityToolError(f"missing required argument: {exc}") from exc
+    except OSError as exc:
+        raise SecurityToolError(f"file error: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -290,8 +298,12 @@ def _run_secrets(args: dict[str, Any]) -> tuple[str, list[Event]]:
     patterns = args.get("patterns")
 
     if patterns is not None:
+        if isinstance(patterns, str):
+            raise SecurityToolError(
+                "patterns must be a list of glob strings, not a single string"
+            )
         result: SecretScanResult = scan_directory(
-            scan_root, patterns=tuple(patterns)
+            scan_root, patterns=tuple(str(p) for p in patterns)
         )
     else:
         result = scan_directory(scan_root)
@@ -327,9 +339,20 @@ def _run_maturity(args: dict[str, Any]) -> tuple[str, list[Event]]:
     return "\n".join(lines), []
 
 
+def _assert_localhost(url: str) -> None:
+    """Reject non-localhost URLs to prevent SSRF via LLM-controlled server_url."""
+    host = urllib.parse.urlparse(url).hostname or ""
+    if host not in ("localhost", "127.0.0.1", "::1"):
+        raise SecurityToolError(
+            f"server_url must be a localhost address (got {url!r}); "
+            "AIBOM enrichment only connects to the local Lemonade Server."
+        )
+
+
 def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
     store_id = args["store_id"]
     server_url = args.get("server_url") or DEFAULT_URL
+    _assert_localhost(server_url)
 
     static_components = (
         AibomComponent(

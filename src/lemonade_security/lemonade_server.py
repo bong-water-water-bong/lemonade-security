@@ -79,6 +79,9 @@ def list_downloaded_models(url: str = DEFAULT_URL) -> list[LemonadeModel]:
     except Exception:
         return []
 
+    if not isinstance(raw, dict):
+        return []
+
     models: list[LemonadeModel] = []
     for entry in raw.get("data", []):
         if not isinstance(entry, dict):
@@ -114,6 +117,8 @@ def models_to_components(models: list[LemonadeModel]) -> tuple[AibomComponent, .
 
 def _parse_model(entry: dict) -> LemonadeModel:  # type: ignore[type-arg]
     labels_raw = entry.get("labels", [])
+    if not isinstance(labels_raw, (list, tuple)):
+        labels_raw = []
     labels = tuple(str(lb) for lb in labels_raw if isinstance(lb, str))
 
     size = entry.get("size")
