@@ -21,6 +21,12 @@ class RiskMapping:
 
 OWASP_RISK_MAPPINGS: tuple[RiskMapping, ...] = (
     RiskMapping(
+        id="LLM01:2026",
+        name="Prompt Injection",
+        source="GenAI-LLM-Top10/2026",
+        lemonade_policy="Scan agent input boundaries for system-prompt break, role confusion, exfiltration cues, and encoded smuggling.",
+    ),
+    RiskMapping(
         id="LLM02:2026",
         name="Sensitive Information Disclosure",
         source="GenAI-LLM-Top10/2026",
@@ -136,5 +142,10 @@ def risk_ids_for_code(code: str) -> tuple[str, ...]:
         "LLM02_pin": ("LLM02:2026", "ASI03", "DSGAI02"),
         "LLM02_secret_field": ("LLM02:2026", "ASI03", "DSGAI02"),
         "LLM02_credential_leak": ("LLM02:2026", "ASI03", "DSGAI02"),
+        "LLM01_system_break": ("LLM01:2026", "ASI06"),
+        "LLM01_role_confusion": ("LLM01:2026", "ASI06"),
+        "LLM01_exfil_cue": ("LLM01:2026", "LLM02:2026"),
+        "LLM01_encoded_smuggling": ("LLM01:2026", "ASI06"),
+        "LLM01_extra_pattern": ("LLM01:2026",),
     }
     return mapping.get(code, ())
