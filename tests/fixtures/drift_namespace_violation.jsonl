@@ -1,0 +1,1 @@
+{"schema_version":"store.event.v1","event_id":"drift-ns-001","ts":"2026-05-19T18:30:00Z","store_id":"tie-dye-farms","department":"cashier","type":"store.opened","source":"lemonade-cashier","actor":{"kind":"agent_auto","id":"cashier.supervisor"},"requires_approval":false,"approved_by":null,"payload":{"note":"cashier writing into store namespace — outside its writes contract"}}
