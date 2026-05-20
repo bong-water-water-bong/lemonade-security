@@ -77,11 +77,12 @@ class SecretScanResult:
 
     paths_checked: int
     findings: tuple[SecretFinding, ...]
+    unreadable_paths: tuple[str, ...] = ()
 
     @property
     def passed(self) -> bool:
-        """Return ``True`` when no findings were emitted."""
-        return not self.findings
+        """Return ``True`` when no findings were emitted and all files were readable."""
+        return not self.findings and not self.unreadable_paths
 
 
 # ---------------------------------------------------------------------------
@@ -93,9 +94,9 @@ _BEARER_RE = re.compile(r"\bBearer\s+[A-Za-z0-9+/=_\-]{20,}")
 
 # JWT shape: three base64url segments; first must start with "eyJ"
 _JWT_RE = re.compile(
-    r"\beyJ[A-Za-z0-9+/=_\-]+"
-    r"\.[A-Za-z0-9+/=_\-]+"
-    r"\.[A-Za-z0-9+/=_\-]+"
+    r"\beyJ[A-Za-z0-9_\-]+"
+    r"\.[A-Za-z0-9_\-]+"
+    r"\.[A-Za-z0-9_\-]*"
 )
 
 # .env-style assignment: SECRET_KEY=... PASSWORD=... TOKEN=... API_KEY=... PRIVATE_KEY=...
@@ -139,6 +140,7 @@ def scan_files(paths: list[str | Path]) -> SecretScanResult:
         List of file paths to scan (any mix of ``str`` and ``Path``).
     """
     findings: list[SecretFinding] = []
+    unreadable: list[str] = []
     paths_checked = 0
 
     for raw_path in paths:
@@ -146,8 +148,8 @@ def scan_files(paths: list[str | Path]) -> SecretScanResult:
         try:
             text = p.read_text(encoding="utf-8", errors="replace")
         except OSError:
-            # Unreadable file — skip silently; caller controls which paths
-            # to pass in.
+            # Unreadable file — record path so callers know it was not scanned.
+            unreadable.append(str(p))
             continue
 
         paths_checked += 1
@@ -156,6 +158,7 @@ def scan_files(paths: list[str | Path]) -> SecretScanResult:
     return SecretScanResult(
         paths_checked=paths_checked,
         findings=tuple(findings),
+        unreadable_paths=tuple(unreadable),
     )
 
 
@@ -194,14 +197,49 @@ def scan_directory(
 
 def _scan_text(text: str, path: str) -> list[SecretFinding]:
     findings: list[SecretFinding] = []
+
+    # For .json files, attempt a whole-file parse to catch pretty-printed secrets.
+    # Findings from the whole-file parse replace the per-line secret_field_name
+    # check so that there is no double-counting.
+    whole_file_json_finding: SecretFinding | None = None
+    skip_per_line_secret_field = False
+    if path.endswith(".json"):
+        try:
+            obj: Any = json.loads(text)
+            key_found = _find_secret_key(obj)
+            if key_found is not None:
+                whole_file_json_finding = SecretFinding(
+                    code="secret_field_name",
+                    severity="high",
+                    path=path,
+                    line_number=1,
+                    context=key_found,
+                )
+            # Whether or not a secret was found, suppress per-line parsing of
+            # secret_field_name to avoid double-counting.
+            skip_per_line_secret_field = True
+        except json.JSONDecodeError:
+            pass  # Fall through to line-by-line scanning below
+
+    if whole_file_json_finding is not None:
+        findings.append(whole_file_json_finding)
+
     for line_number, line in enumerate(text.splitlines(), start=1):
-        findings.extend(_scan_line(line, path, line_number))
+        findings.extend(_scan_line(line, path, line_number, skip_secret_field=skip_per_line_secret_field))
     return findings
 
 
-def _scan_line(line: str, path: str, line_number: int) -> list[SecretFinding]:
+def _scan_line(
+    line: str,
+    path: str,
+    line_number: int,
+    *,
+    skip_secret_field: bool = False,
+) -> list[SecretFinding]:
     findings: list[SecretFinding] = []
     seen_codes: set[str] = set()  # one finding per code per line is enough
+    if skip_secret_field:
+        seen_codes.add("secret_field_name")
 
     # --- 1. Bearer token (critical) ----------------------------------------
     if "bearer_token" not in seen_codes and _BEARER_RE.search(line):

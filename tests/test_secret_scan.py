@@ -146,6 +146,7 @@ def test_jwt_context_does_not_contain_secret() -> None:
     for f in jwts:
         # The JWT header, payload, and signature segments must not appear in context
         assert "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" not in f.context
+        assert "eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzE2MjAwMDAwfQ" not in f.context
         assert "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" not in f.context
 
 
@@ -274,11 +275,11 @@ def test_empty_file_produces_no_findings(tmp_path: Path) -> None:
 
 
 def test_unreadable_path_is_skipped_gracefully(tmp_path: Path) -> None:
-    """A non-existent path is skipped; paths_checked stays 0."""
+    """A non-existent path is skipped; paths_checked stays 0 and path is recorded."""
     result = scan_files([tmp_path / "does_not_exist.jsonl"])
 
     assert result.paths_checked == 0
-    assert result.passed
+    assert len(result.unreadable_paths) == 1
 
 
 def test_clean_log_does_not_trigger_on_event_ids(tmp_path: Path) -> None:
@@ -286,3 +287,41 @@ def test_clean_log_does_not_trigger_on_event_ids(tmp_path: Path) -> None:
     result = scan_files([FIXTURES / "scan_clean.jsonl"])
 
     assert "high_entropy_key" not in _codes(result)
+
+
+# ---------------------------------------------------------------------------
+# Fix 2: OSError tracking
+# ---------------------------------------------------------------------------
+
+
+def test_unreadable_file_marks_result_as_not_passed() -> None:
+    result = scan_files([Path("/nonexistent/path/that/does/not/exist.jsonl")])
+    assert not result.passed
+    assert len(result.unreadable_paths) == 1
+
+
+# ---------------------------------------------------------------------------
+# Fix 3: Pretty-printed JSON scanning
+# ---------------------------------------------------------------------------
+
+
+def test_pretty_printed_json_file_detects_secret_field() -> None:
+    import json
+    import os
+    import tempfile
+
+    data = {"user": "alice", "password": "supersecret123", "role": "admin"}
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp:
+        json.dump(data, tmp, indent=2)
+        tmp_path = tmp.name
+    try:
+        result = scan_files([Path(tmp_path)])
+        codes = {f.code for f in result.findings}
+        assert "secret_field_name" in codes
+        # context must not contain the password value
+        for f in result.findings:
+            assert "supersecret123" not in f.context
+    finally:
+        os.unlink(tmp_path)
