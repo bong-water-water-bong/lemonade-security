@@ -131,5 +131,10 @@ def risk_ids_for_code(code: str) -> tuple[str, ...]:
         "ASI03_rogue_agent_id": ("ASI03", "LLM06:2026"),
         "ASI03_stripped_agent_id": ("ASI03",),
         "ASI02_orphan_delegation": ("ASI02", "LLM06:2026"),
+        "LLM02_bearer_token": ("LLM02:2026", "ASI03", "DSGAI02"),
+        "LLM02_jwt": ("LLM02:2026", "ASI03", "DSGAI02"),
+        "LLM02_pin": ("LLM02:2026", "ASI03", "DSGAI02"),
+        "LLM02_secret_field": ("LLM02:2026", "ASI03", "DSGAI02"),
+        "LLM02_credential_leak": ("LLM02:2026", "ASI03", "DSGAI02"),
     }
     return mapping.get(code, ())
