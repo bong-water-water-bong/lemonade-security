@@ -24,9 +24,9 @@ lemonade-security maturity --events tests/fixtures/store_events.jsonl --store-id
 
 The CLI writes one JSON event per line to stdout. Findings use `security.finding.created`; the final summary uses `security.audit.completed`. Exit code is 1 when any findings are present, 0 on a clean pass.
 
-### The four audit surfaces
+### Five audit surfaces
 
-**1. Event-log auditor (`audit.py` + `drift.py`)**
+**1. Event-log auditor (`audit.py`) + drift scanner (`drift.py`)**
 
 The primary auditor. Reads every JSONL line through `lemonade_store.events.load_event` (the shared `store.event.v1` envelope validator) and flags:
 
@@ -36,9 +36,20 @@ The primary auditor. Reads every JSONL line through `lemonade_store.events.load_
 - Cashier events containing payment terms (`card`, `stripe`, `wallet`, etc.) in their payload keys (`cashier_payment_boundary`, critical)
 - Any event with customer media keys (`customer_audio`, `face_image`, etc.) in its payload (`customer_media_boundary`, critical)
 
-The drift scanner (`drift.py`) extends this with registry-aware checks: namespace violations (a department writing event types outside its declared `writes` prefixes) and approval-gate drift (a gate-required action arriving with `requires_approval=False`).
+The drift scanner (`drift.py`) extends this with registry-aware checks: namespace violations (a department writing event types outside its declared `writes` prefixes) and approval-gate drift (a gate-required action arriving with `requires_approval=False`). Drift scanning runs as part of surface 1 but is listed separately here because it is a distinct audit concern.
 
-**2. IAM maturity scorer (`maturity.py`)**
+**2. Credential-replay auditor (`audit_credential_replay.py`)**
+
+Scans the entire `agent.proposal` payload (all nested keys and values recursively) for credential-shaped values that could be replayed elsewhere (OWASP LLM02:2026 / DSGAI02). Four pattern codes:
+
+- `LLM02_bearer_token` — RFC 6750 `Bearer`/`Token`/`Basic` headers and well-known secret prefixes (`sk-`, `ghp_`, `AKIA`, `AIza`, etc.)
+- `LLM02_jwt` — three-segment base64url strings whose first segment decodes to a JSON object with `alg` or `typ`
+- `LLM02_pin` — `pin=NNNN`-shaped substrings (4–8 digits)
+- `LLM02_secret_field` — any payload key named `password`, `passwd`, `secret`, `api_key`, `apikey`, or `token`
+
+Secret values are never copied into findings; the placeholder `<redacted>` is used instead. The auditor knows the event's own `delegation_id` and allowlists it so 32-hex delegation IDs do not trigger `LLM02_bearer_token`.
+
+**3. IAM maturity scorer (`maturity.py`)**
 
 Scores an event log against the IBM IAM-for-AI 4-step model (sourced from IBM video `e8ela6puxig`), which maps onto OWASP ASI03 (Identity and Privilege Abuse):
 
@@ -50,17 +61,6 @@ Scores an event log against the IBM IAM-for-AI 4-step model (sourced from IBM vi
 | 4 | adaptive | At least one `security.revocation.created` event is present |
 
 The scorer is conservative: it degrades to the highest level it can prove. A single orphan `cart.*` event or a single missing `agent_id` holds the log below Enhanced.
-
-**3. Credential-replay auditor (`audit_credential_replay.py`)**
-
-Scans `agent.proposal` payloads for credential-shaped values that could be replayed elsewhere (OWASP LLM02:2026 / DSGAI02). Four pattern codes:
-
-- `LLM02_bearer_token` — RFC 6750 `Bearer`/`Token`/`Basic` headers and well-known secret prefixes (`sk-`, `ghp_`, `AKIA`, `AIza`, etc.)
-- `LLM02_jwt` — three-segment base64url strings whose first segment decodes to a JSON object with `alg` or `typ`
-- `LLM02_pin` — `pin=NNNN`-shaped substrings (4–8 digits)
-- `LLM02_secret_field` — any payload key named `password`, `passwd`, `secret`, `api_key`, `apikey`, or `token`
-
-Secret values are never copied into findings; the placeholder `<redacted>` is used instead. The auditor knows the event's own `delegation_id` and allowlists it so 32-hex delegation IDs do not trigger `LLM02_bearer_token`.
 
 **4. Prompt-injection auditor (`audit_prompt_injection.py`)**
 
