@@ -32,10 +32,25 @@ def test_audit_supply_chain_detects_placeholder_version() -> None:
             version="0.0.0-placeholder",
             supplier="Unknown",
         ),
+        AibomComponent(
+            kind="tool",
+            name="Zero-Model",
+            version="0.0.0",
+            supplier="Unknown",
+        ),
+        AibomComponent(
+            kind="plugin",
+            name="Empty-Model",
+            version="",
+            supplier="Unknown",
+        ),
     )
     findings = audit_supply_chain(components)
-    codes = {f.code for f in findings}
-    assert "supply_chain_unversioned" in codes
+    names = {f.component_name for f in findings}
+    assert "Placeholder-Model" in names
+    assert "Zero-Model" in names
+    assert "Empty-Model" in names
+    assert all(f.code == "supply_chain_unversioned" for f in findings)
 
 
 def test_audit_supply_chain_detects_missing_supplier() -> None:
