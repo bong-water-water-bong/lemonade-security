@@ -147,5 +147,8 @@ def risk_ids_for_code(code: str) -> tuple[str, ...]:
         "LLM01_exfil_cue": ("LLM01:2026", "LLM02:2026"),
         "LLM01_encoded_smuggling": ("LLM01:2026", "ASI06"),
         "LLM01_extra_pattern": ("LLM01:2026",),
+        "supply_chain_unversioned": ("LLM03:2026", "ASI04"),
+        "supply_chain_no_supplier": ("LLM03:2026", "ASI04"),
+        "supply_chain_missing_location": ("LLM03:2026", "ASI04"),
     }
     return mapping.get(code, ())

@@ -42,6 +42,7 @@ from lemonade_store.events import Event
 
 from lemonade_security.aibom import AibomComponent, local_manifest, to_cyclonedx_json
 from lemonade_security.audit import AuditResult, audit_event_log, finding_events, summary_event
+from lemonade_security.audit_supply_chain import audit_supply_chain
 from lemonade_security.drift import DriftResult, scan_permission_drift
 from lemonade_security.lemonade_server import (
     DEFAULT_URL,
@@ -194,6 +195,34 @@ SECURITY_TOOLS: list[dict[str, Any]] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "lemonade_security_audit_aibom",
+            "description": (
+                "Audit the local AI Bill of Materials (AIBOM) for supply-chain risks "
+                "(OWASP LLM03:2026). Checks for placeholder versions, missing suppliers, "
+                "and non-existent component locations. Read-only. No cloud calls."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "store_id": {
+                        "type": "string",
+                        "description": "Store identifier to audit.",
+                    },
+                    "server_url": {
+                        "type": "string",
+                        "description": (
+                            f"Lemonade Server base URL (default: {DEFAULT_URL}). "
+                            "Pass null or omit to use the default."
+                        ),
+                    },
+                },
+                "required": ["store_id"],
+            },
+        },
+    },
 ]
 
 
@@ -238,6 +267,7 @@ def execute_security_tool(
         "lemonade_security_secrets": _run_secrets,
         "lemonade_security_maturity": _run_maturity,
         "lemonade_security_aibom": _run_aibom,
+        "lemonade_security_audit_aibom": _run_audit_aibom,
     }
     fn = dispatch.get(name)
     if fn is None:
@@ -349,11 +379,8 @@ def _assert_localhost(url: str) -> None:
         )
 
 
-def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
-    store_id = args["store_id"]
-    server_url = args.get("server_url") or DEFAULT_URL
-    _assert_localhost(server_url)
-
+def _get_aibom_components(server_url: str) -> tuple[AibomComponent, ...]:
+    """Gather static and dynamic (Lemonade Server) AIBOM components."""
     static_components = (
         AibomComponent(
             kind="plugin",
@@ -370,11 +397,16 @@ def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
             location="src/lemonade_security",
         ),
     )
-
-    # Enrich with locally downloaded models when server is reachable.
     server_components = models_to_components(list_downloaded_models(server_url))
-    components = static_components + server_components
+    return static_components + server_components
 
+
+def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
+    store_id = args["store_id"]
+    server_url = args.get("server_url") or DEFAULT_URL
+    _assert_localhost(server_url)
+
+    components = _get_aibom_components(server_url)
     manifest = local_manifest(store_id=store_id, components=components)
     text = to_cyclonedx_json(manifest)
 
@@ -388,3 +420,22 @@ def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
         header = f"# Lemonade Server offline at {server_url} (static components only)\n"
 
     return header + text, []
+
+
+def _run_audit_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
+    store_id = args["store_id"]
+    server_url = args.get("server_url") or DEFAULT_URL
+    _assert_localhost(server_url)
+
+    components = _get_aibom_components(server_url)
+    findings = audit_supply_chain(components)
+
+    lines = [
+        f"aibom-audit: {len(components)} component(s) checked, "
+        f"{len(findings)} finding(s), "
+        f"{'PASSED' if not findings else 'FAILED'}",
+    ]
+    for f in findings:
+        lines.append(f"  [{f.severity}] {f.code} ({f.component_name}): {f.message}")
+
+    return "\n".join(lines), []
