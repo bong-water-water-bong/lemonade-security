@@ -12,6 +12,8 @@
 
 > Local policy checks, agent audits, AIBOM manifests, and privacy findings for Lemonade Store.
 
+**→ [Project Wiki](docs/wiki/README.md)** — architecture, decisions, gotchas, and agent onboarding.
+
 **Lemonade Security** is the `security` department for
 [Lemonade Store](https://github.com/bong-water-water-bong/lemonade-store).
 It reads store event logs and configuration, then emits `security.*`
