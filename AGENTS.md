@@ -1,3 +1,5 @@
+> **Start here:** Read `docs/wiki/README.md` before any work on this project.
+
 # AGENTS.md — Lemonade Security
 
 This repo is the `security` department for Lemonade Store.
