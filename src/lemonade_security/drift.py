@@ -10,9 +10,9 @@ Three drift rules are enforced:
    outside those prefixes (e.g. a ``cashier`` agent writing ``store.*``
    events) is a high-severity violation.
 
-2. **Approval-gate drift** — if the event type's *action* suffix (the
-   last dot-separated segment) matches an entry in the department's
-   ``requires_owner_approval_for`` tuple, the event *must* have
+2. **Approval-gate drift** — if any meaningful event type token matches
+   an entry in the department's ``requires_owner_approval_for`` tuple,
+   the event *must* have
    ``requires_approval=True``. An event with ``requires_approval=False``
    for a gate-required action means the approval gate has been bypassed.
 
@@ -175,8 +175,11 @@ def scan_permission_drift(path: str | Path, *, store_id: str) -> DriftResult:
             # Rule 2: approval-gate drift                                       #
             # ---------------------------------------------------------------- #
             if dept.requires_owner_approval_for:
-                action = event.type.split(".")[-1]
-                if action in dept.requires_owner_approval_for and not event.requires_approval:
+                action = _approval_gate_action(
+                    event.type,
+                    dept.requires_owner_approval_for,
+                )
+                if action is not None and not event.requires_approval:
                     findings.append(
                         DriftFinding(
                             code="approval_gate_drift",
@@ -207,4 +210,18 @@ def _raw_event_id(raw: object) -> str | None:
         event_id = raw.get("event_id")
         if isinstance(event_id, str):
             return event_id
+    return None
+
+
+def _approval_gate_action(event_type: str, required_actions: tuple[str, ...]) -> str | None:
+    """Return the owner-gated action named by an event type, if any.
+
+    Event names usually read like ``department.action.state``. Matching every
+    token catches ``site.deploy.requested`` and ``accounting.export.created``
+    while still requiring an explicit action token from the registry.
+    """
+    tokens = tuple(part for part in event_type.split(".")[1:] if part)
+    for action in required_actions:
+        if action in tokens:
+            return action
     return None

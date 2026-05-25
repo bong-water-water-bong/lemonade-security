@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
+from lemonade_store.departments import registry
+
+from lemonade_security.audit import audit_event_log
 from lemonade_security.drift import DriftFinding, DriftResult, scan_permission_drift
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -118,6 +121,20 @@ def test_approval_gate_drift_count_matches_log() -> None:
     assert len(result.findings) == 1
 
 
+def test_approval_gate_drift_detects_action_tokens() -> None:
+    """Owner-gated actions must still be caught in typed event names."""
+    result = scan_permission_drift(
+        FIXTURES / "drift_approval_gate_tokens.jsonl", store_id="tie-dye-farms"
+    )
+
+    gate_findings = [f for f in result.findings if f.code == "approval_gate_drift"]
+    assert len(gate_findings) == 2
+    assert {f.event_id for f in gate_findings} == {
+        "drift-ap-token-001",
+        "drift-ap-token-002",
+    }
+
+
 def test_approval_gate_not_triggered_when_approval_set() -> None:
     """An event with requires_approval=True for a gate-required action is fine."""
     # accounting.export with requires_approval=True should not produce a finding.
@@ -127,6 +144,20 @@ def test_approval_gate_not_triggered_when_approval_set() -> None:
     assert result.passed is True
     codes = {f.code for f in result.findings}
     assert "approval_gate_drift" not in codes
+
+
+def test_every_registered_department_has_clean_fixture_coverage() -> None:
+    """The security lane should accept one clean event from every department."""
+    fixture = FIXTURES / "every_department_events.jsonl"
+    expected_count = len(registry())
+
+    audit_result = audit_event_log(fixture, store_id="tie-dye-farms")
+    drift_result = scan_permission_drift(fixture, store_id="tie-dye-farms")
+
+    assert audit_result.passed is True
+    assert audit_result.checked_events == expected_count
+    assert drift_result.passed is True
+    assert drift_result.checked_events == expected_count
 
 
 # --------------------------------------------------------------------------- #

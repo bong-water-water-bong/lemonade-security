@@ -47,7 +47,7 @@ def test_tool_definitions_are_valid_json() -> None:
     assert len(loaded) == len(SECURITY_TOOLS)
 
 
-def test_five_tools_registered() -> None:
+def test_six_tools_registered() -> None:
     names = {t["function"]["name"] for t in SECURITY_TOOLS}
     assert names == {
         "lemonade_security_audit",
@@ -55,6 +55,7 @@ def test_five_tools_registered() -> None:
         "lemonade_security_secrets",
         "lemonade_security_maturity",
         "lemonade_security_aibom",
+        "lemonade_security_audit_aibom",
     }
 
 

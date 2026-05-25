@@ -7,9 +7,19 @@ from collections.abc import Sequence
 
 from lemonade_store.events import dump_event
 
+from lemonade_security.aibom import AibomComponent, local_manifest, to_cyclonedx_json
 from lemonade_security.audit import audit_event_log, finding_events, summary_event
+from lemonade_security.audit_supply_chain import audit_supply_chain
+from lemonade_security.drift import scan_permission_drift
+from lemonade_security.lemonade_server import (
+    DEFAULT_URL,
+    list_downloaded_models,
+    models_to_components,
+    probe_server,
+)
 from lemonade_security.maturity import score_iam_maturity
 from lemonade_security.policy_check import policy_check_events
+from lemonade_security.secret_scan import scan_directory
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -31,6 +41,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     maturity.add_argument("--store-id", required=True, help="expected store_id")
 
+    drift = subparsers.add_parser("drift", help="scan an event log for department permission drift")
+    drift.add_argument("--events", required=True, help="path to store_events.jsonl")
+    drift.add_argument("--store-id", required=True, help="expected store_id")
+
+    secrets = subparsers.add_parser("secrets", help="scan a directory for credential exposure")
+    secrets.add_argument("--scan-root", required=True, help="directory to scan")
+    secrets.add_argument("--pattern", action="append", help="glob pattern to include (repeatable)")
+
+    aibom = subparsers.add_parser("aibom", help="generate a CycloneDX 1.6-compatible AIBOM manifest")
+    aibom.add_argument("--store-id", required=True, help="store identifier for the manifest")
+    aibom.add_argument("--server-url", default=DEFAULT_URL, help=f"Lemonade Server URL (default: {DEFAULT_URL})")
+
+    audit_aibom = subparsers.add_parser("audit-aibom", help="audit the AIBOM for supply-chain risks")
+    audit_aibom.add_argument("--store-id", required=True, help="store identifier to audit")
+    audit_aibom.add_argument("--server-url", default=DEFAULT_URL, help=f"Lemonade Server URL (default: {DEFAULT_URL})")
+
     return parser
 
 
@@ -38,13 +64,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     if args.command == "audit":
-        result = audit_event_log(args.events, store_id=args.store_id)
-        for event in finding_events(result):
+        audit_result = audit_event_log(args.events, store_id=args.store_id)
+        for event in finding_events(audit_result):
             print(dump_event(event))
-        for event in policy_check_events(result):
+        for event in policy_check_events(audit_result):
             print(dump_event(event))
-        print(dump_event(summary_event(result)))
-        return 1 if result.findings else 0
+        print(dump_event(summary_event(audit_result)))
+        return 1 if audit_result.findings else 0
 
     if args.command == "maturity":
         score = score_iam_maturity(args.events, store_id=args.store_id)
@@ -54,4 +80,74 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"next: {score.next_step}")
         return 0
 
+    if args.command == "drift":
+        drift_result = scan_permission_drift(args.events, store_id=args.store_id)
+        print(
+            f"drift: {drift_result.checked_events} events checked, "
+            f"{len(drift_result.findings)} finding(s)"
+        )
+        for drift_finding in drift_result.findings:
+            print(
+                f"  [{drift_finding.severity}] {drift_finding.code} "
+                f"(line {drift_finding.line_number}): {drift_finding.message}"
+            )
+        return 1 if drift_result.findings else 0
+
+    if args.command == "secrets":
+        patterns = tuple(args.pattern) if args.pattern else None
+        if patterns:
+            secret_result = scan_directory(args.scan_root, patterns=patterns)
+        else:
+            secret_result = scan_directory(args.scan_root)
+        print(
+            f"secrets: {secret_result.paths_checked} files checked, "
+            f"{len(secret_result.findings)} finding(s)"
+        )
+        for secret_finding in secret_result.findings:
+            print(
+                f"  [{secret_finding.severity}] {secret_finding.code} "
+                f"at {secret_finding.path}:{secret_finding.line_number}"
+            )
+        if secret_result.unreadable_paths:
+            print(f"  unreadable: {', '.join(secret_result.unreadable_paths)}")
+        return 1 if secret_result.findings else 0
+
+    if args.command == "aibom":
+        components = _get_cli_components(args.server_url)
+        manifest = local_manifest(store_id=args.store_id, components=components)
+        print(to_cyclonedx_json(manifest))
+        return 0
+
+    if args.command == "audit-aibom":
+        components = _get_cli_components(args.server_url)
+        findings = audit_supply_chain(components)
+        print(f"aibom-audit: {len(components)} component(s) checked, {len(findings)} finding(s)")
+        for f in findings:
+            print(f"  [{f.severity}] {f.code} ({f.component_name}): {f.message}")
+        return 1 if findings else 0
+
     return 2
+
+
+def _get_cli_components(server_url: str) -> tuple[AibomComponent, ...]:
+    static_components = (
+        AibomComponent(
+            kind="plugin",
+            name="lemonade-sdk-security",
+            version="0.1.0",
+            supplier="lemonade-security",
+            location="plugins/lemonade-sdk-security",
+        ),
+        AibomComponent(
+            kind="department",
+            name="lemonade-security",
+            version="0.1.0",
+            supplier="lemonade-security",
+            location="src/lemonade_security",
+        ),
+    )
+    status = probe_server(server_url)
+    if status.online:
+        models = list_downloaded_models(server_url)
+        return static_components + models_to_components(models)
+    return static_components
