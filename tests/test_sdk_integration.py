@@ -6,7 +6,6 @@ the correct set of security events for downstream persistence.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from lemonade_security.sdk_plugin import execute_security_tool

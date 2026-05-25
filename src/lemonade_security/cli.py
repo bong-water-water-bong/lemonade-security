@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from collections.abc import Sequence
 
 from lemonade_store.events import dump_event
@@ -65,13 +64,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     if args.command == "audit":
-        result = audit_event_log(args.events, store_id=args.store_id)
-        for event in finding_events(result):
+        audit_result = audit_event_log(args.events, store_id=args.store_id)
+        for event in finding_events(audit_result):
             print(dump_event(event))
-        for event in policy_check_events(result):
+        for event in policy_check_events(audit_result):
             print(dump_event(event))
-        print(dump_event(summary_event(result)))
-        return 1 if result.findings else 0
+        print(dump_event(summary_event(audit_result)))
+        return 1 if audit_result.findings else 0
 
     if args.command == "maturity":
         score = score_iam_maturity(args.events, store_id=args.store_id)
@@ -82,24 +81,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.command == "drift":
-        result = scan_permission_drift(args.events, store_id=args.store_id)
-        print(f"drift: {result.checked_events} events checked, {len(result.findings)} finding(s)")
-        for finding in result.findings:
-            print(f"  [{finding.severity}] {finding.code} (line {finding.line_number}): {finding.message}")
-        return 1 if result.findings else 0
+        drift_result = scan_permission_drift(args.events, store_id=args.store_id)
+        print(
+            f"drift: {drift_result.checked_events} events checked, "
+            f"{len(drift_result.findings)} finding(s)"
+        )
+        for drift_finding in drift_result.findings:
+            print(
+                f"  [{drift_finding.severity}] {drift_finding.code} "
+                f"(line {drift_finding.line_number}): {drift_finding.message}"
+            )
+        return 1 if drift_result.findings else 0
 
     if args.command == "secrets":
         patterns = tuple(args.pattern) if args.pattern else None
         if patterns:
-            result = scan_directory(args.scan_root, patterns=patterns)
+            secret_result = scan_directory(args.scan_root, patterns=patterns)
         else:
-            result = scan_directory(args.scan_root)
-        print(f"secrets: {result.paths_checked} files checked, {len(result.findings)} finding(s)")
-        for finding in result.findings:
-            print(f"  [{finding.severity}] {finding.code} at {finding.path}:{finding.line_number}")
-        if result.unreadable_paths:
-            print(f"  unreadable: {', '.join(result.unreadable_paths)}")
-        return 1 if result.findings else 0
+            secret_result = scan_directory(args.scan_root)
+        print(
+            f"secrets: {secret_result.paths_checked} files checked, "
+            f"{len(secret_result.findings)} finding(s)"
+        )
+        for secret_finding in secret_result.findings:
+            print(
+                f"  [{secret_finding.severity}] {secret_finding.code} "
+                f"at {secret_finding.path}:{secret_finding.line_number}"
+            )
+        if secret_result.unreadable_paths:
+            print(f"  unreadable: {', '.join(secret_result.unreadable_paths)}")
+        return 1 if secret_result.findings else 0
 
     if args.command == "aibom":
         components = _get_cli_components(args.server_url)

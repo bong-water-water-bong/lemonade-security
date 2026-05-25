@@ -423,7 +423,6 @@ def _run_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
 
 
 def _run_audit_aibom(args: dict[str, Any]) -> tuple[str, list[Event]]:
-    store_id = args["store_id"]
     server_url = args.get("server_url") or DEFAULT_URL
     _assert_localhost(server_url)
 
