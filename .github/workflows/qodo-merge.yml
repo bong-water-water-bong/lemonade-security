@@ -12,8 +12,7 @@ jobs:
       contents: read
     steps:
       - name: Qodo Merge Review
-        uses: qodo-ai/qodo-merge@main
-        env:
-          QODO_API_KEY: ${{ secrets.QODO_API_KEY }}
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Qodo merge review is optional for this repository."
+          echo "Skipping because qodo-ai/qodo-merge is not a resolvable public GitHub Action."
+          echo "Keep PR-Agent and CI as the required automated gates."
