@@ -1,5 +1,14 @@
 # Project Wiki: Lemonade Security
 
+## Wiki Navigation
+
+All automation agents and contributors must refer to the following wiki pages:
+- [[architecture]]: System design, audit surfaces, and CLI structure.
+- [[policy-engine]]: Policy engine pipeline, rule evaluation, and AIBOM schema.
+- [[conventions]]: Coding standards, Ruff linting rules, Mypy strict mode, and local-first import/output policies.
+- [[runbook]]: Operational instructions, CLI command usage, ports, and environment variables.
+- [[agents]]: Safety policies, autonomous vs. review-only zones, and boundaries from root `AGENTS.md`.
+
 ## Mission
 Build a local-first security auditor for Lemonade Store and a plugin surface for Lemonade SDK. It provides policy checks, agent audits, and AIBOM manifests.
 
