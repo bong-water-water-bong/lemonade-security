@@ -9,6 +9,17 @@ Build a local-first security auditor for Lemonade Store and a plugin surface for
 - **Department Boundary**: Acts as a read-only consumer of other departments' logs.
 - **Plugin Surface**: Includes a dedicated `plugins/` directory for exposing security capabilities to Lemonade SDK hosts.
 
+## Runtime Setup
+
+- `make install` creates `.venv` and installs the local auditor with
+  `lemonade-store@main` plus development tooling.
+- The base install does not include `lemonade-agents`, GAIA, Torch, or
+  model runtime packages.
+- `make install-agents` is the explicit opt-in path for local Lemonade
+  SDK / GAIA security checks.
+- The SDK plugin wrapper must stay local-only and read-only unless an
+  owner-approved export path is added.
+
 ## Agent Handoff
 - **How to Test**: Run `make test`. Sample event logs are available in `tests/fixtures/`.
 - **Hot Paths**:

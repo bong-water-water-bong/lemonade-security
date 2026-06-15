@@ -1,7 +1,7 @@
 # Lemonade Security
 
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](pyproject.toml)
-[![Store](https://img.shields.io/badge/contracts-lemonade--store-2ea44f)](https://github.com/bong-water-water-bong/lemonade-store)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
+[![Store](https://img.shields.io/badge/contracts-lemonade--store%20main-2ea44f)](https://github.com/bong-water-water-bong/lemonade-store)
 [![Lemonade SDK plugin](https://img.shields.io/badge/Lemonade%20SDK-plugin-ffd34d)](plugins/lemonade-sdk-security)
 [![local-first](https://img.shields.io/badge/local--first-security%20audit-2ea44f)](#lemonade-security)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](#license)
@@ -89,6 +89,17 @@ The command prints one JSON event per line. Findings use
 The base install depends on `lemonade-store@main` for event contracts.
 The optional `agents` extra installs the external GAIA agent bridge when
 security checks need to run through Lemonade SDK agents.
+
+## Suite runtime boundary
+
+- Security is read-only against other department logs and emits
+  `security.*` findings; it never rewrites source events.
+- `make install` creates `.venv` and installs only the local auditor,
+  `lemonade-store@main`, and development tools.
+- `make install-agents` is the explicit opt-in path for the
+  `lemonade-agents` bridge when running local Lemonade SDK / GAIA checks.
+- The Lemonade SDK plugin wrapper exposes local tools only; it must not
+  become a cloud dependency or bypass owner approval gates.
 
 ## Status
 
