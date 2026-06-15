@@ -74,6 +74,7 @@ logs.
 ## Quick start
 
 ```sh
+make install
 make test
 
 PYTHONPATH=src:../lemonade-store/src python3 -m lemonade_security audit \
@@ -84,6 +85,10 @@ PYTHONPATH=src:../lemonade-store/src python3 -m lemonade_security audit \
 The command prints one JSON event per line. Findings use
 `security.finding.created`; the final summary uses
 `security.audit.completed`.
+
+The base install depends on `lemonade-store@main` for event contracts.
+The optional `agents` extra installs the external GAIA agent bridge when
+security checks need to run through Lemonade SDK agents.
 
 ## Status
 
