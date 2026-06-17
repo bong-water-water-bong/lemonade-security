@@ -112,6 +112,39 @@ _SECRET_FIELD_NAMES: frozenset[str] = frozenset(
 )
 
 
+def scan_proposal_event(
+    raw: dict[str, Any],
+    *,
+    line_number: int = 1,
+    allow_substrings: frozenset[str] = frozenset(),
+) -> list[AuditFinding]:
+    """Scan a single decoded event dict for credential-shaped leaks.
+
+    Returns an empty list for events that are not ``agent.proposal`` or
+    whose ``payload`` is not a dict. This is the per-event atom shared by
+    the file-based :func:`audit_credential_replay` and the inline gate.
+    """
+    if raw.get("type") != _PROPOSAL_TYPE:
+        return []
+    payload = raw.get("payload")
+    if not isinstance(payload, dict):
+        return []
+    event_id = _event_id_of(raw)
+    known_delegation = payload.get("delegation_id")
+    known_delegation_str = (
+        known_delegation if isinstance(known_delegation, str) else None
+    )
+    return list(
+        _scan_payload(
+            payload,
+            event_id=event_id,
+            line_number=line_number,
+            allow_substrings=allow_substrings,
+            known_delegation=known_delegation_str,
+        )
+    )
+
+
 def audit_credential_replay(
     path: str | Path,
     *,
@@ -151,26 +184,11 @@ def audit_credential_replay(
             if not isinstance(raw, dict):
                 continue
             checked_events += 1
-            if raw.get("type") != _PROPOSAL_TYPE:
-                continue
-
-            payload = raw.get("payload")
-            if not isinstance(payload, dict):
-                continue
-
-            event_id = _event_id_of(raw)
-            known_delegation = payload.get("delegation_id")
-            known_delegation_str = (
-                known_delegation if isinstance(known_delegation, str) else None
-            )
-
             findings.extend(
-                _scan_payload(
-                    payload,
-                    event_id=event_id,
+                scan_proposal_event(
+                    raw,
                     line_number=line_number,
                     allow_substrings=allow_substrings,
-                    known_delegation=known_delegation_str,
                 )
             )
 
