@@ -12,16 +12,31 @@ def test_all_policies_pass_on_clean_log() -> None:
     result = audit_event_log(FIXTURES / "store_events.jsonl", store_id="tie-dye-farms")
     events = policy_check_events(result)
 
-    assert len(events) == len(LEMONADE_POLICIES)
+    assert len(events) == sum(
+        1 for p in LEMONADE_POLICIES if p.check_scope == "store-event-log"
+    )
     assert all(e.type == "security.policy.checked" for e in events)
     assert all(e.department == "security" for e in events)
     assert all(e.payload["result"] == "pass" for e in events)
     assert all(e.payload["finding_count"] == 0 for e in events)
 
 
-def test_policy_count_matches_registered_policies() -> None:
+def test_policy_count_matches_store_event_log_policies() -> None:
     result = audit_event_log(FIXTURES / "store_events.jsonl", store_id="tie-dye-farms")
-    assert len(policy_check_events(result)) == len(LEMONADE_POLICIES)
+    events = policy_check_events(result)
+    assert len(events) == sum(
+        1 for p in LEMONADE_POLICIES if p.check_scope == "store-event-log"
+    )
+
+
+def test_proposal_scoped_policy_is_not_reported_by_log_audit() -> None:
+    # credential_leak_boundary is evaluated inline by the gate, not by the
+    # whole-log CLI audit, so it must NOT appear in policy_check_events output
+    # (its LLM02_* codes are never produced by audit_event_log → it would
+    # otherwise always report a misleading "pass").
+    result = audit_event_log(FIXTURES / "store_events.jsonl", store_id="tie-dye-farms")
+    policy_ids = {e.payload["policy_id"] for e in policy_check_events(result)}
+    assert "credential_leak_boundary" not in policy_ids
 
 
 def test_payment_boundary_fails_on_bad_log() -> None:
@@ -87,3 +102,16 @@ def test_event_ids_stable_regardless_of_policy_order() -> None:
     # Run again — IDs must be identical (deterministic hash from store_id + policy.id)
     events2 = policy_check_events(result)
     assert [e.event_id for e in events] == [e.event_id for e in events2]
+
+
+def test_credential_leak_boundary_policy_maps_all_four_llm02_codes():
+    rule = next(p for p in LEMONADE_POLICIES if p.id == "credential_leak_boundary")
+    assert rule.finding_codes == frozenset(
+        {
+            "LLM02_secret_field",
+            "LLM02_bearer_token",
+            "LLM02_jwt",
+            "LLM02_pin",
+        }
+    )
+    assert "LLM02:2026" in rule.owasp_ids

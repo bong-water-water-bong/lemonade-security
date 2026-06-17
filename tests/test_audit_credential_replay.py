@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from lemonade_security.audit_credential_replay import audit_credential_replay
+from lemonade_security.audit_credential_replay import (
+    audit_credential_replay,
+    scan_proposal_event,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -262,3 +265,45 @@ def test_result_carries_store_id_and_checked_event_count() -> None:
     assert result.store_id == "tie-dye-farms"
     assert result.checked_events == 2
     assert result.passed
+
+
+# ---- scan_proposal_event unit tests -------------------------------------
+
+
+def test_scan_proposal_event_flags_bearer_token_in_input():
+    event = {
+        "type": "agent.proposal",
+        "payload": {
+            "agent": "lemonade",
+            "kind": "normalize",
+            "input": "please authorize with Bearer abcdef0123456789ABCDEF",
+            "output": "2 lemonade",
+            "confidence": 0.9,
+            "decision": "accepted",
+        },
+    }
+    findings = scan_proposal_event(event)
+    assert [f.code for f in findings] == ["LLM02_bearer_token"]
+
+
+def test_scan_proposal_event_clean_proposal_has_no_findings():
+    event = {
+        "type": "agent.proposal",
+        "payload": {
+            "agent": "lemonade",
+            "kind": "normalize",
+            "input": "2 lemonades",
+            "output": "2 lemonade",
+            "confidence": 0.9,
+            "decision": "accepted",
+        },
+    }
+    assert scan_proposal_event(event) == []
+
+
+def test_scan_proposal_event_ignores_non_proposal_events():
+    assert scan_proposal_event({"type": "cart.add", "payload": {"token": "x"}}) == []
+
+
+def test_scan_proposal_event_ignores_non_dict_payload():
+    assert scan_proposal_event({"type": "agent.proposal", "payload": "nope"}) == []
