@@ -24,6 +24,13 @@ class PolicyRule:
     description: str
     owasp_ids: tuple[str, ...]
     finding_codes: frozenset[str]
+    # Which scan surface produces this policy's finding codes.
+    # ``store-event-log`` policies are evaluated by ``policy_check_events``
+    # over an ``audit_event_log`` result; ``proposal-event`` policies are
+    # evaluated inline per ``agent.proposal`` by ``gate.evaluate_proposal``
+    # and must NOT be reported by the whole-log CLI audit (their codes are
+    # never produced by ``audit_event_log``, so they would always "pass").
+    check_scope: str = "store-event-log"
 
 
 LEMONADE_POLICIES: tuple[PolicyRule, ...] = (
@@ -72,15 +79,25 @@ LEMONADE_POLICIES: tuple[PolicyRule, ...] = (
                 "LLM02_pin",
             }
         ),
+        check_scope="proposal-event",
     ),
 )
 
 
 def policy_check_events(result: AuditResult) -> list[Event]:
-    """Emit one security.policy.checked event per registered policy."""
+    """Emit one security.policy.checked event per store-event-log policy.
+
+    Only ``store-event-log`` scoped policies are emitted: their finding
+    codes are produced by ``audit_event_log``, which feeds this function.
+    ``proposal-event`` policies (e.g. ``credential_leak_boundary``) are
+    evaluated inline by ``gate.evaluate_proposal`` and are skipped here so
+    the CLI audit does not report a meaningless "pass" for codes the
+    whole-log scan never generates.
+    """
     return [
         _policy_event(result, policy)
         for policy in LEMONADE_POLICIES
+        if policy.check_scope == "store-event-log"
     ]
 
 
@@ -113,7 +130,7 @@ def _payload(policy: PolicyRule, result: str, finding_count: int) -> dict[str, A
         "result": result,
         "owasp_ids": list(policy.owasp_ids),
         "finding_count": finding_count,
-        "check_scope": "store-event-log",
+        "check_scope": policy.check_scope,
     }
 
 
