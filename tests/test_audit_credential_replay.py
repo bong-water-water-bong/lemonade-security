@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from lemonade_security.audit_credential_replay import audit_credential_replay
+from lemonade_security.audit_credential_replay import (
+    audit_credential_replay,
+    scan_proposal_event,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -265,9 +268,6 @@ def test_result_carries_store_id_and_checked_event_count() -> None:
 
 
 # ---- scan_proposal_event unit tests -------------------------------------
-
-
-from lemonade_security.audit_credential_replay import scan_proposal_event
 
 
 def test_scan_proposal_event_flags_bearer_token_in_input():
