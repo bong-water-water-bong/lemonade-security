@@ -87,3 +87,16 @@ def test_event_ids_stable_regardless_of_policy_order() -> None:
     # Run again — IDs must be identical (deterministic hash from store_id + policy.id)
     events2 = policy_check_events(result)
     assert [e.event_id for e in events] == [e.event_id for e in events2]
+
+
+def test_credential_leak_boundary_policy_maps_all_four_llm02_codes():
+    rule = next(p for p in LEMONADE_POLICIES if p.id == "credential_leak_boundary")
+    assert rule.finding_codes == frozenset(
+        {
+            "LLM02_secret_field",
+            "LLM02_bearer_token",
+            "LLM02_jwt",
+            "LLM02_pin",
+        }
+    )
+    assert "LLM02:2026" in rule.owasp_ids

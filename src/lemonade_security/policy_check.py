@@ -57,6 +57,22 @@ LEMONADE_POLICIES: tuple[PolicyRule, ...] = (
         owasp_ids=("LLM06:2026", "ASI09"),
         finding_codes=frozenset({"draft_already_approved"}),
     ),
+    PolicyRule(
+        id="credential_leak_boundary",
+        description=(
+            "Agent proposals must not carry bearer tokens, JWTs, PINs, "
+            "or secret-named fields."
+        ),
+        owasp_ids=("LLM02:2026", "ASI03"),
+        finding_codes=frozenset(
+            {
+                "LLM02_secret_field",
+                "LLM02_bearer_token",
+                "LLM02_jwt",
+                "LLM02_pin",
+            }
+        ),
+    ),
 )
 
 
