@@ -103,7 +103,7 @@ All findings arrive as `store.event.v1` envelope events with `department="securi
 
 - **Delegation IDs must be exactly 32 lowercase hex characters**: The maturity scorer's `_delegation_id` helper validates the value with `int(delegation_id, 16)` and a length check of exactly 32 chars. A UUID with hyphens (36 chars) or a free-form string will not satisfy the Enhanced level check, even if the intent was correct. Callers must mint 32-char lowercase hex strings, not UUIDs.
 
-- **The `audit` CLI subcommand does not invoke the agent-proposal, credential-replay, or prompt-injection auditors**: `cli.py` calls only `audit_event_log`, `policy_check_events`, and `summary_event`. The other four auditors (`audit_agent_proposals`, `audit_credential_replay`, `audit_prompt_injection`, `scan_permission_drift`) are available in the SDK plugin (`sdk_plugin.py`) and as standalone library calls, but have no dedicated CLI subcommands yet.
+- **The `audit` CLI subcommand does not invoke the agent-proposal, credential-replay, or prompt-injection auditors**: `cli.py` calls only `audit_event_log`, `policy_check_events`, and `summary_event`. The other three auditors (`audit_agent_proposals`, `audit_credential_replay`, and `audit_prompt_injection`) are available in the SDK plugin (`sdk_plugin.py`) and as standalone library calls, but have no dedicated CLI subcommands yet. A dedicated CLI subcommand `drift` calling `scan_permission_drift` actually exists, along with `maturity` and `secrets`.
 
 ## Related
 
