@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from lemonade_store.departments import registry
 from lemonade_store.events import EventValidationError, load_event
@@ -62,6 +63,14 @@ class DriftResult:
     @property
     def passed(self) -> bool:
         return not self.findings
+
+
+@dataclass(frozen=True)
+class _DriftEvent:
+    event_id: str
+    department: str
+    type: str
+    requires_approval: bool
 
 
 # --------------------------------------------------------------------------- #
@@ -117,18 +126,21 @@ def scan_permission_drift(path: str | Path, *, store_id: str) -> DriftResult:
             # Envelope validation                                               #
             # ---------------------------------------------------------------- #
             try:
-                event = load_event(raw)
+                event: Any = load_event(raw)
             except EventValidationError as exc:
-                findings.append(
-                    DriftFinding(
-                        code="invalid_envelope",
-                        severity=_SEVERITIES["invalid_envelope"],
-                        message=str(exc),
-                        line_number=line_number,
-                        event_id=_raw_event_id(raw),
+                drift_event = _coerce_drift_event(raw)
+                if drift_event is None or not _has_drift_signal(drift_event, dept_registry):
+                    findings.append(
+                        DriftFinding(
+                            code="invalid_envelope",
+                            severity=_SEVERITIES["invalid_envelope"],
+                            message=str(exc),
+                            line_number=line_number,
+                            event_id=_raw_event_id(raw),
+                        )
                     )
-                )
-                continue
+                    continue
+                event = drift_event
 
             checked_events += 1
 
@@ -211,6 +223,37 @@ def _raw_event_id(raw: object) -> str | None:
         if isinstance(event_id, str):
             return event_id
     return None
+
+
+def _coerce_drift_event(raw: object) -> _DriftEvent | None:
+    if not isinstance(raw, dict):
+        return None
+    event_id = raw.get("event_id")
+    department = raw.get("department")
+    event_type = raw.get("type")
+    requires_approval = raw.get("requires_approval")
+    if not (
+        isinstance(event_id, str)
+        and isinstance(department, str)
+        and isinstance(event_type, str)
+        and isinstance(requires_approval, bool)
+    ):
+        return None
+    return _DriftEvent(
+        event_id=event_id,
+        department=department,
+        type=event_type,
+        requires_approval=requires_approval,
+    )
+
+
+def _has_drift_signal(event: _DriftEvent, dept_registry: dict[str, Any]) -> bool:
+    dept = dept_registry.get(event.department)
+    if dept is None:
+        return True
+    if not any(event.type.startswith(prefix) for prefix in dept.writes):
+        return True
+    return _approval_gate_action(event.type, dept.requires_owner_approval_for) is not None
 
 
 def _approval_gate_action(event_type: str, required_actions: tuple[str, ...]) -> str | None:
