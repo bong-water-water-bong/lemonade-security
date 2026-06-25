@@ -19,8 +19,12 @@ Three drift rules are enforced:
 3. **Unknown department** — an event whose ``department`` field is not
    present in the registry is a medium-severity violation.
 
-Events that fail basic envelope validation (``EventValidationError``) are
-recorded as ``invalid_envelope`` findings and skipped for further checks.
+Events that are structurally malformed are recorded as
+``invalid_envelope`` findings and skipped for further checks. Note the
+scanner uses its own lenient structural parser (``_parse_envelope``)
+rather than ``lemonade_store.events.load_event``: contract violations
+are exactly what this scanner must classify, and the strict loader would
+reject them as ``invalid_envelope`` before the drift rules could run.
 """
 
 from __future__ import annotations
@@ -30,7 +34,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from lemonade_store.departments import registry
-from lemonade_store.events import EventValidationError, load_event
+from lemonade_store.events import SCHEMA_VERSION
 
 # --------------------------------------------------------------------------- #
 # Public data types                                                             #
@@ -62,6 +66,96 @@ class DriftResult:
     @property
     def passed(self) -> bool:
         return not self.findings
+
+
+@dataclass(frozen=True)
+class _Envelope:
+    """A leniently-parsed event envelope used only by the drift scanner.
+
+    The drift scanner audits *contract* violations (a department emitting
+    outside its namespace, or bypassing an owner-approval gate). Those
+    events are, by definition, rejected by the strict ``load_event``
+    validator in ``lemonade_store.events``. If the scanner parsed through
+    that validator it could never see the very violations it exists to
+    report — they would all collapse into ``invalid_envelope``.
+
+    So the scanner does its own *structural* parse here: it confirms the
+    envelope is well-formed (required fields present and correctly typed,
+    namespaced event type, known schema version) but deliberately does
+    NOT enforce registry-coupled rules (namespace match, ``emits``
+    membership, approval pairing). Those are the drift rules below.
+    """
+
+    event_id: str
+    department: str
+    type: str
+    requires_approval: bool
+
+
+_REQUIRED_STR_FIELDS: tuple[str, ...] = (
+    "schema_version",
+    "event_id",
+    "ts",
+    "store_id",
+    "department",
+    "type",
+    "source",
+)
+
+
+class _EnvelopeStructureError(ValueError):
+    """Raised when an envelope is malformed (not merely contract-violating)."""
+
+
+def _parse_envelope(raw: object) -> _Envelope:
+    """Structurally validate a raw event dict for the drift scanner.
+
+    Raises ``_EnvelopeStructureError`` for genuinely malformed envelopes
+    (missing/mistyped required fields, non-namespaced type, unknown
+    schema). Registry/contract violations are intentionally allowed
+    through so the drift rules can classify them.
+    """
+    if not isinstance(raw, dict):
+        raise _EnvelopeStructureError("event must be a JSON object")
+
+    for field_name in _REQUIRED_STR_FIELDS:
+        if field_name not in raw:
+            raise _EnvelopeStructureError(f"missing required field {field_name!r}")
+        if not isinstance(raw[field_name], str):
+            raise _EnvelopeStructureError(
+                f"{field_name} must be a string, got {type(raw[field_name]).__name__}"
+            )
+
+    if raw["schema_version"] != SCHEMA_VERSION:
+        raise _EnvelopeStructureError(
+            f"unknown schema_version {raw['schema_version']!r}; expected {SCHEMA_VERSION!r}"
+        )
+
+    if "." not in raw["type"]:
+        raise _EnvelopeStructureError(
+            f"event type {raw['type']!r} is not namespaced (expected 'department.foo.bar')"
+        )
+
+    actor = raw.get("actor")
+    if (
+        not isinstance(actor, dict)
+        or not isinstance(actor.get("kind"), str)
+        or not isinstance(actor.get("id"), str)
+    ):
+        raise _EnvelopeStructureError("actor must be an object with string 'kind' and 'id'")
+
+    requires_approval = raw.get("requires_approval", False)
+    if not isinstance(requires_approval, bool):
+        raise _EnvelopeStructureError(
+            f"requires_approval must be a boolean, got {type(requires_approval).__name__}"
+        )
+
+    return _Envelope(
+        event_id=raw["event_id"],
+        department=raw["department"],
+        type=raw["type"],
+        requires_approval=requires_approval,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -114,11 +208,11 @@ def scan_permission_drift(path: str | Path, *, store_id: str) -> DriftResult:
                 continue
 
             # ---------------------------------------------------------------- #
-            # Envelope validation                                               #
+            # Envelope validation (structural only — see _parse_envelope)       #
             # ---------------------------------------------------------------- #
             try:
-                event = load_event(raw)
-            except EventValidationError as exc:
+                event = _parse_envelope(raw)
+            except _EnvelopeStructureError as exc:
                 findings.append(
                     DriftFinding(
                         code="invalid_envelope",
