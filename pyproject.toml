@@ -55,7 +55,7 @@ lemonade_security = ["py.typed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-pythonpath = ["src", "../lemonade-store/src"]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
@@ -68,7 +68,7 @@ ignore = ["E501"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-mypy_path = "src:../lemonade-store/src"
+mypy_path = "src"
 packages = ["lemonade_security"]
 warn_unused_ignores = true
 warn_redundant_casts = true
