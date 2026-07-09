@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lemonade-store"
+version = "0.1.0"
+description = "Stub for lemonade-store — used by lemonade-security CI when the real package is unavailable."
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lemonade_store*"]
