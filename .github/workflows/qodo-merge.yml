@@ -1,6 +1,13 @@
 name: qodo-merge
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to review (leave empty for PR event)"
+        required: false
+        type: string
 
 jobs:
   qodo-merge:
